@@ -12,18 +12,18 @@ DB_PATH = os.path.join(BASE_DIR, 'drivekz.db')
 UPLOAD_DIR = os.path.join(BASE_DIR, 'static', 'uploads')
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-app = FastAPI(title='Drive.kz')
+app = FastAPI(title='Автопрокат Актобе')
 app.add_middleware(SessionMiddleware, secret_key='drivekz-demo-secret-change-in-production', max_age=60*60*24*30)
 app.mount('/static', StaticFiles(directory=os.path.join(BASE_DIR, 'static')), name='static')
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, 'templates'))
 
 SEED_CARS = [
- {'name':'Toyota Camry 70','city':'Алматы','price':25000,'class':'Бизнес','body':'Седан','gearbox':'Автомат','fuel':'Бензин','seats':5,'year':2024,'deposit':100000,'rating':4.9,'image':'img/camry.svg','badge':'Популярный','features':'Климат-контроль|Apple CarPlay|Камера 360°|Круиз-контроль'},
- {'name':'Hyundai Tucson','city':'Астана','price':29000,'class':'Комфорт','body':'Кроссовер','gearbox':'Автомат','fuel':'Бензин','seats':5,'year':2023,'deposit':120000,'rating':4.8,'image':'img/tucson.svg','badge':'Выгодно','features':'Подогрев сидений|CarPlay|Парктроники|Круиз-контроль'},
- {'name':'Toyota Land Cruiser 300','city':'Алматы','price':65000,'class':'Премиум','body':'Внедорожник','gearbox':'Автомат','fuel':'Бензин','seats':7,'year':2024,'deposit':300000,'rating':5.0,'image':'img/lc300.svg','badge':'Premium','features':'7 мест|Камера 360°|Вентиляция сидений|Полный привод'},
- {'name':'Kia K5','city':'Шымкент','price':22000,'class':'Комфорт','body':'Седан','gearbox':'Автомат','fuel':'Бензин','seats':5,'year':2023,'deposit':90000,'rating':4.7,'image':'img/k5.svg','badge':'','features':'Климат-контроль|Bluetooth|Камера заднего вида|Подогрев сидений'},
- {'name':'BMW X5','city':'Астана','price':72000,'class':'Премиум','body':'Кроссовер','gearbox':'Автомат','fuel':'Бензин','seats':5,'year':2024,'deposit':350000,'rating':4.9,'image':'img/x5.svg','badge':'Premium','features':'Панорама|Камера 360°|Harman Kardon|Полный привод'},
- {'name':'Chevrolet Cobalt','city':'Алматы','price':15000,'class':'Эконом','body':'Седан','gearbox':'Автомат','fuel':'Бензин','seats':5,'year':2022,'deposit':60000,'rating':4.6,'image':'img/cobalt.svg','badge':'Лучшая цена','features':'Кондиционер|Bluetooth|USB|Экономичный расход'},
+ {'name':'Toyota Camry 70','city':'Актобе','price':25000,'class':'Бизнес','body':'Седан','gearbox':'Автомат','fuel':'Бензин','seats':5,'year':2024,'deposit':100000,'rating':4.9,'image':'img/camry.svg','badge':'Популярный','features':'Климат-контроль|Apple CarPlay|Камера 360°|Круиз-контроль'},
+ {'name':'Hyundai Tucson','city':'Актобе','price':29000,'class':'Комфорт','body':'Кроссовер','gearbox':'Автомат','fuel':'Бензин','seats':5,'year':2023,'deposit':120000,'rating':4.8,'image':'img/tucson.svg','badge':'Выгодно','features':'Подогрев сидений|CarPlay|Парктроники|Круиз-контроль'},
+ {'name':'Toyota Land Cruiser 300','city':'Актобе','price':65000,'class':'Премиум','body':'Внедорожник','gearbox':'Автомат','fuel':'Бензин','seats':7,'year':2024,'deposit':300000,'rating':5.0,'image':'img/lc300.svg','badge':'Premium','features':'7 мест|Камера 360°|Вентиляция сидений|Полный привод'},
+ {'name':'Kia K5','city':'Актобе','price':22000,'class':'Комфорт','body':'Седан','gearbox':'Автомат','fuel':'Бензин','seats':5,'year':2023,'deposit':90000,'rating':4.7,'image':'img/k5.svg','badge':'','features':'Климат-контроль|Bluetooth|Камера заднего вида|Подогрев сидений'},
+ {'name':'BMW X5','city':'Актобе','price':72000,'class':'Премиум','body':'Кроссовер','gearbox':'Автомат','fuel':'Бензин','seats':5,'year':2024,'deposit':350000,'rating':4.9,'image':'img/x5.svg','badge':'Premium','features':'Панорама|Камера 360°|Harman Kardon|Полный привод'},
+ {'name':'Chevrolet Cobalt','city':'Актобе','price':15000,'class':'Эконом','body':'Седан','gearbox':'Автомат','fuel':'Бензин','seats':5,'year':2022,'deposit':60000,'rating':4.6,'image':'img/cobalt.svg','badge':'Лучшая цена','features':'Кондиционер|Bluetooth|USB|Экономичный расход'},
 ]
 
 EXTRA_PRICES = {'Детское кресло':3000,'Дополнительный водитель':5000,'Доставка авто':4000,'Полная страховка':7000}
@@ -89,7 +89,7 @@ def init_db():
             c.execute('''INSERT INTO cars(name,city,price,class,body,gearbox,fuel,seats,year,deposit,rating,image,badge,features,status,hidden,created_at)
                          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
                       (car['name'],car['city'],car['price'],car['class'],car['body'],car['gearbox'],car['fuel'],car['seats'],car['year'],car['deposit'],car['rating'],car['image'],car['badge'],car['features'],'Доступен',0,datetime.now().strftime('%Y-%m-%d %H:%M')))
-    defaults = {'company_name':'Drive.kz','phone':'+7 775 430 63 20','whatsapp':'+7 775 430 63 20','support_email':'hello@drive.kz','currency':'₸','booking_mode':'manual','reminder_minutes':'10'}
+    defaults = {'company_name':'Автопрокат Актобе','phone':'+7 775 430 63 20','whatsapp':'+7 775 430 63 20','support_email':'hello@drive.kz','currency':'₸','booking_mode':'manual','reminder_minutes':'10'}
     for k,v in defaults.items(): c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)',(k,v))
     c.commit(); c.close()
 
@@ -418,7 +418,7 @@ def check_promo(code:str,amount:int=0):
     discount=(amount*p['discount']//100) if p['kind']=='percent' else min(amount,p['discount']); return JSONResponse({'valid':True,'discount':discount,'label':f"-{p['discount']}%" if p['kind']=='percent' else f"-{p['discount']} ₸"})
 
 @app.get('/about', response_class=HTMLResponse, name='about')
-def about(request:Request):return templates.TemplateResponse(request=request,name='simple.html',context=ctx(request,title='О сервисе',body='Drive.kz — современная платформа аренды автомобилей с прозрачными ценами, онлайн-бронированием и поддержкой 24/7.'))
+def about(request:Request):return templates.TemplateResponse(request=request,name='simple.html',context=ctx(request,title='О сервисе',body='Современный сервис аренды автомобилей в Актобе с прозрачными ценами, онлайн-бронированием и удобной связью через WhatsApp.'))
 @app.get('/terms', response_class=HTMLResponse, name='terms')
 def terms(request:Request):return templates.TemplateResponse(request=request,name='simple.html',context=ctx(request,title='Условия аренды',body='Минимальный возраст, стаж, залог, лимит пробега, правила возврата и страхования настраиваются владельцем автопроката в админ-панели.'))
 @app.get('/faq', response_class=HTMLResponse, name='faq')
