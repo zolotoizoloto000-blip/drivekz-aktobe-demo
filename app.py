@@ -89,7 +89,7 @@ def init_db():
             c.execute('''INSERT INTO cars(name,city,price,class,body,gearbox,fuel,seats,year,deposit,rating,image,badge,features,status,hidden,created_at)
                          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
                       (car['name'],car['city'],car['price'],car['class'],car['body'],car['gearbox'],car['fuel'],car['seats'],car['year'],car['deposit'],car['rating'],car['image'],car['badge'],car['features'],'Доступен',0,datetime.now().strftime('%Y-%m-%d %H:%M')))
-    defaults = {'company_name':'Drive.kz','phone':'+7 700 000 00 00','whatsapp':'+7 700 000 00 00','support_email':'hello@drive.kz','currency':'₸','booking_mode':'manual','reminder_minutes':'10'}
+    defaults = {'company_name':'Drive.kz','phone':'+7 775 430 63 20','whatsapp':'+7 775 430 63 20','support_email':'hello@drive.kz','currency':'₸','booking_mode':'manual','reminder_minutes':'10'}
     for k,v in defaults.items(): c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)',(k,v))
     c.commit(); c.close()
 
@@ -155,7 +155,7 @@ def resolve_user_id(phone, name='', email=''):
 
 
 @app.get('/', response_class=HTMLResponse, name='home')
-def home(request:Request): return templates.TemplateResponse('home.html',ctx(request,cars=all_cars()[:3]))
+def home(request:Request): return templates.TemplateResponse(request=request,name='home.html',context=ctx(request,cars=all_cars()[:3]))
 
 @app.get('/catalog', response_class=HTMLResponse, name='catalog')
 def catalog(request:Request,city:str='',min_price:int=0,max_price:int=100000,car_class:str=Query('',alias='class'),gearbox:str='',body:str='',fuel:str='',seats:int=0,no_deposit:int=0,q:str='',sort:str='popular',pickup:str='',return_date:str=Query('',alias='return')):
@@ -176,33 +176,33 @@ def catalog(request:Request,city:str='',min_price:int=0,max_price:int=100000,car
     elif sort=='price_desc': cars.sort(key=lambda x:x['price'],reverse=True)
     elif sort=='rating': cars.sort(key=lambda x:x['rating'],reverse=True)
     else: cars.sort(key=lambda x:(x['badge']!='Популярный',-x['rating']))
-    return templates.TemplateResponse('catalog.html',ctx(request,cars=cars,city=city,min_price=min_price,max_price=max_price,car_class=car_class,gearbox=gearbox,body=body,fuel=fuel,seats=seats,no_deposit=no_deposit,q=q,sort=sort,pickup=pickup,return_date=return_date))
+    return templates.TemplateResponse(request=request,name='catalog.html',context=ctx(request,cars=cars,city=city,min_price=min_price,max_price=max_price,car_class=car_class,gearbox=gearbox,body=body,fuel=fuel,seats=seats,no_deposit=no_deposit,q=q,sort=sort,pickup=pickup,return_date=return_date))
 
 @app.get('/car/{car_id}', response_class=HTMLResponse, name='car_detail')
 def car_detail(request:Request,car_id:int):
     car=car_by_id(car_id)
     if not car or car['hidden']: return HTMLResponse('Автомобиль не найден',404)
-    return templates.TemplateResponse('car_detail.html',ctx(request,car=car))
+    return templates.TemplateResponse(request=request,name='car_detail.html',context=ctx(request,car=car))
 
 @app.get('/favorites', response_class=HTMLResponse, name='favorites')
-def favorites(request:Request): return templates.TemplateResponse('favorites.html',ctx(request,cars=all_cars()))
+def favorites(request:Request): return templates.TemplateResponse(request=request,name='favorites.html',context=ctx(request,cars=all_cars()))
 
 # --- Demo authentication ---
 @app.get('/login', response_class=HTMLResponse, name='login')
-def login(request:Request): return templates.TemplateResponse('login.html',ctx(request,step='phone',phone=''))
+def login(request:Request): return templates.TemplateResponse(request=request,name='login.html',context=ctx(request,step='phone',phone=''))
 
 @app.post('/login', response_class=HTMLResponse, name='login_phone')
 async def login_phone(request:Request):
     f=await request.form(); phone=(f.get('phone') or '').strip()
-    if not phone: return templates.TemplateResponse('login.html',ctx(request,step='phone',phone='',error='Введите номер телефона'),status_code=400)
+    if not phone: return templates.TemplateResponse(request=request,name='login.html',context=ctx(request,step='phone',phone='',error='Введите номер телефона'),status_code=400)
     request.session['login_phone']=phone; request.session['otp']='1111'
-    return templates.TemplateResponse('login.html',ctx(request,step='code',phone=phone,demo_code='1111'))
+    return templates.TemplateResponse(request=request,name='login.html',context=ctx(request,step='code',phone=phone,demo_code='1111'))
 
 @app.post('/login/verify', name='login_verify')
 async def login_verify(request:Request):
     f=await request.form(); code=(f.get('code') or '').strip(); phone=request.session.get('login_phone')
     if not phone or code!=request.session.get('otp'):
-        return templates.TemplateResponse('login.html',ctx(request,step='code',phone=phone or '',demo_code='1111',error='Неверный код. Для демо используйте 1111'),status_code=400)
+        return templates.TemplateResponse(request=request,name='login.html',context=ctx(request,step='code',phone=phone or '',demo_code='1111',error='Неверный код. Для демо используйте 1111'),status_code=400)
     uid=resolve_user_id(phone, f.get('name') or 'Клиент', f.get('email') or '')
     request.session['user_id']=uid; request.session.pop('otp',None); return RedirectResponse('/profile',303)
 
@@ -224,7 +224,7 @@ def profile(request:Request,section:str='bookings',status:str=''):
     else:
         bookings=c.execute('SELECT * FROM bookings ORDER BY id DESC LIMIT 8').fetchall(); docs=[]
     promos=c.execute('SELECT * FROM promos WHERE active=1 ORDER BY id DESC').fetchall(); c.close()
-    return templates.TemplateResponse('profile.html',ctx(request,bookings=bookings,documents=docs,promos=promos,section=section,status_filter=status))
+    return templates.TemplateResponse(request=request,name='profile.html',context=ctx(request,bookings=bookings,documents=docs,promos=promos,section=section,status_filter=status))
 
 @app.post('/profile/settings', name='profile_settings')
 async def profile_settings(request:Request):
@@ -251,7 +251,7 @@ def cancel_booking(request:Request,booking_id:int):
 def booking_get(request:Request,car_id:int,pickup:str='',return_date:str=Query('',alias='return'),promo:str=''):
     car=car_by_id(car_id)
     if not car or car['hidden'] or car['status']!='Доступен': return HTMLResponse('Автомобиль сейчас недоступен',404)
-    return templates.TemplateResponse('booking.html',ctx(request,car=car,pickup=pickup,return_date=return_date,promo=promo,extra_prices=EXTRA_PRICES))
+    return templates.TemplateResponse(request=request,name='booking.html',context=ctx(request,car=car,pickup=pickup,return_date=return_date,promo=promo,extra_prices=EXTRA_PRICES))
 
 @app.post('/booking/{car_id}', name='booking_post')
 async def booking_post(request:Request,car_id:int):
@@ -275,27 +275,27 @@ async def booking_post(request:Request,car_id:int):
 def booking_success(request:Request,booking_id:int):
     c=db(); b=c.execute('SELECT * FROM bookings WHERE id=?',(booking_id,)).fetchone(); c.close()
     if not b:return HTMLResponse('Бронь не найдена',404)
-    return templates.TemplateResponse('booking_success.html',ctx(request,booking=b))
+    return templates.TemplateResponse(request=request,name='booking_success.html',context=ctx(request,booking=b))
 
 # --- Admin ---
 @app.get('/admin', response_class=HTMLResponse, name='admin_dashboard')
 def admin_dashboard(request:Request):
     c=db(); bookings=c.execute('SELECT * FROM bookings ORDER BY id DESC LIMIT 8').fetchall(); t=c.execute("SELECT COUNT(*) c,COALESCE(SUM(CASE WHEN status!='Отменена' THEN total ELSE 0 END),0) s FROM bookings").fetchone(); active=c.execute("SELECT COUNT(*) c FROM bookings WHERE status IN ('Подтверждена','Машина выдана')").fetchone()['c']; today_count=c.execute('SELECT COUNT(*) c FROM bookings WHERE substr(created_at,1,10)=?',(date.today().isoformat(),)).fetchone()['c']; c.close(); cars=all_cars(True)
-    return templates.TemplateResponse('admin_dashboard.html',ctx(request,bookings=bookings,stats={'bookings':t['c'],'revenue':t['s'],'active':active,'cars':len(cars),'today':today_count},cars=cars))
+    return templates.TemplateResponse(request=request,name='admin_dashboard.html',context=ctx(request,bookings=bookings,stats={'bookings':t['c'],'revenue':t['s'],'active':active,'cars':len(cars),'today':today_count},cars=cars))
 
 @app.get('/admin/bookings', response_class=HTMLResponse, name='admin_bookings')
 def admin_bookings(request:Request,status:str='',q:str=''):
     c=db(); sql='SELECT * FROM bookings WHERE 1=1'; args=[]
     if status: sql+=' AND status=?'; args.append(status)
     if q: sql+=' AND (customer_name LIKE ? OR phone LIKE ? OR car_name LIKE ? OR CAST(id AS TEXT) LIKE ?)'; args.extend([f'%{q}%']*4)
-    bookings=c.execute(sql+' ORDER BY id DESC',args).fetchall(); c.close(); return templates.TemplateResponse('admin_bookings.html',ctx(request,bookings=bookings,status_filter=status,q=q,statuses=BOOKING_STATUSES))
+    bookings=c.execute(sql+' ORDER BY id DESC',args).fetchall(); c.close(); return templates.TemplateResponse(request=request,name='admin_bookings.html',context=ctx(request,bookings=bookings,status_filter=status,q=q,statuses=BOOKING_STATUSES))
 
 @app.post('/admin/booking/{booking_id}/status', name='update_booking_status')
 async def update_booking_status(request:Request,booking_id:int):
     f=await request.form(); status=f.get('status'); c=db(); c.execute('UPDATE bookings SET status=? WHERE id=?',(status,booking_id)); c.commit(); c.close(); add_notification(f'Статус брони #{booking_id}: {status}',booking_id); return RedirectResponse(request.headers.get('referer','/admin/bookings'),303)
 
 @app.get('/admin/new-booking', response_class=HTMLResponse, name='admin_new_booking')
-def admin_new_booking_get(request:Request): return templates.TemplateResponse('admin_new_booking.html',ctx(request,cars=[x for x in all_cars() if x['status']=='Доступен']))
+def admin_new_booking_get(request:Request): return templates.TemplateResponse(request=request,name='admin_new_booking.html',context=ctx(request,cars=[x for x in all_cars() if x['status']=='Доступен']))
 
 @app.post('/admin/new-booking', name='admin_new_booking_post')
 async def admin_new_booking_post(request:Request):
@@ -307,10 +307,10 @@ async def admin_new_booking_post(request:Request):
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',(car['id'],car['name'],car['city'],pd,f.get('pickup_time','10:00'),rd,f.get('return_time','10:00'),f.get('customer_name'),f.get('phone'),f.get('email',''),f.get('pickup_location','Офис проката'),f.get('extras',''),total,'Подтверждена','Менеджер',datetime.now().strftime('%Y-%m-%d %H:%M'),uid)); bid=cur.lastrowid; c.commit(); c.close(); add_notification(f'Менеджер создал бронь #{bid}: {car["name"]}',bid); return RedirectResponse('/admin/bookings',303)
 
 @app.get('/admin/cars', response_class=HTMLResponse, name='admin_cars')
-def admin_cars(request:Request): return templates.TemplateResponse('admin_cars.html',ctx(request,cars=all_cars(True)))
+def admin_cars(request:Request): return templates.TemplateResponse(request=request,name='admin_cars.html',context=ctx(request,cars=all_cars(True)))
 
 @app.get('/admin/cars/new', response_class=HTMLResponse, name='admin_car_new')
-def admin_car_new(request:Request): return templates.TemplateResponse('admin_car_form.html',ctx(request,car=None,statuses=CAR_STATUSES))
+def admin_car_new(request:Request): return templates.TemplateResponse(request=request,name='admin_car_form.html',context=ctx(request,car=None,statuses=CAR_STATUSES))
 
 @app.post('/admin/cars/new', name='admin_car_create')
 async def admin_car_create(request:Request):
@@ -320,7 +320,7 @@ async def admin_car_create(request:Request):
 def admin_car_edit(request:Request,car_id:int):
     car=car_by_id(car_id)
     if not car:return HTMLResponse('Авто не найдено',404)
-    return templates.TemplateResponse('admin_car_form.html',ctx(request,car=car,statuses=CAR_STATUSES))
+    return templates.TemplateResponse(request=request,name='admin_car_form.html',context=ctx(request,car=car,statuses=CAR_STATUSES))
 
 @app.post('/admin/cars/{car_id}/edit', name='admin_car_update')
 async def admin_car_update(request:Request,car_id:int):
@@ -344,23 +344,23 @@ def admin_calendar(request:Request,start:str=''):
         ps=datetime.strptime(b['pickup_date'],'%Y-%m-%d').date(); re=datetime.strptime(b['return_date'],'%Y-%m-%d').date()
         for d in dates:
             if ps<=d<re: occupancy[b['car_id']][d.isoformat()]=dict(b)
-    return templates.TemplateResponse('admin_calendar.html',ctx(request,cars=all_cars(True),bookings=bookings,dates=dates,occupancy=occupancy,start_date=start_date,prev=(start_date-timedelta(days=14)).isoformat(),next=(start_date+timedelta(days=14)).isoformat()))
+    return templates.TemplateResponse(request=request,name='admin_calendar.html',context=ctx(request,cars=all_cars(True),bookings=bookings,dates=dates,occupancy=occupancy,start_date=start_date,prev=(start_date-timedelta(days=14)).isoformat(),next=(start_date+timedelta(days=14)).isoformat()))
 
 @app.get('/admin/clients', response_class=HTMLResponse, name='admin_clients')
 def admin_clients(request:Request,q:str=''):
     c=db(); sql='''SELECT u.*, COUNT(b.id) bookings_count, COALESCE(SUM(CASE WHEN b.status!='Отменена' THEN b.total ELSE 0 END),0) spent FROM users u LEFT JOIN bookings b ON b.user_id=u.id'''; args=[]
     if q: sql+=' WHERE u.name LIKE ? OR u.phone LIKE ? OR u.email LIKE ?'; args=[f'%{q}%']*3
-    sql+=' GROUP BY u.id ORDER BY u.id DESC'; clients=c.execute(sql,args).fetchall(); c.close(); return templates.TemplateResponse('admin_clients.html',ctx(request,clients=clients,q=q))
+    sql+=' GROUP BY u.id ORDER BY u.id DESC'; clients=c.execute(sql,args).fetchall(); c.close(); return templates.TemplateResponse(request=request,name='admin_clients.html',context=ctx(request,clients=clients,q=q))
 
 @app.get('/admin/clients/{user_id}', response_class=HTMLResponse, name='admin_client_detail')
 def admin_client_detail(request:Request,user_id:int):
     c=db(); u=c.execute('SELECT * FROM users WHERE id=?',(user_id,)).fetchone(); bookings=c.execute('SELECT * FROM bookings WHERE user_id=? ORDER BY id DESC',(user_id,)).fetchall(); docs=c.execute('SELECT * FROM documents WHERE user_id=? ORDER BY id DESC',(user_id,)).fetchall(); c.close()
     if not u:return HTMLResponse('Клиент не найден',404)
-    return templates.TemplateResponse('admin_client_detail.html',ctx(request,client=u,bookings=bookings,documents=docs))
+    return templates.TemplateResponse(request=request,name='admin_client_detail.html',context=ctx(request,client=u,bookings=bookings,documents=docs))
 
 @app.get('/admin/payments', response_class=HTMLResponse, name='admin_payments')
 def admin_payments(request:Request):
-    c=db(); payments=c.execute('''SELECT p.*,b.car_name,b.customer_name FROM payments p LEFT JOIN bookings b ON b.id=p.booking_id ORDER BY p.id DESC''').fetchall(); bookings=c.execute("SELECT * FROM bookings WHERE status!='Отменена' ORDER BY id DESC").fetchall(); c.close(); return templates.TemplateResponse('admin_payments.html',ctx(request,payments=payments,bookings=bookings))
+    c=db(); payments=c.execute('''SELECT p.*,b.car_name,b.customer_name FROM payments p LEFT JOIN bookings b ON b.id=p.booking_id ORDER BY p.id DESC''').fetchall(); bookings=c.execute("SELECT * FROM bookings WHERE status!='Отменена' ORDER BY id DESC").fetchall(); c.close(); return templates.TemplateResponse(request=request,name='admin_payments.html',context=ctx(request,payments=payments,bookings=bookings))
 
 @app.post('/admin/payments', name='admin_payment_create')
 async def admin_payment_create(request:Request):
@@ -372,7 +372,7 @@ def admin_payment_refund(payment_id:int):
 
 @app.get('/admin/promos', response_class=HTMLResponse, name='admin_promos')
 def admin_promos(request:Request):
-    c=db(); promos=c.execute('SELECT * FROM promos ORDER BY id DESC').fetchall(); c.close(); return templates.TemplateResponse('admin_promos.html',ctx(request,promos=promos))
+    c=db(); promos=c.execute('SELECT * FROM promos ORDER BY id DESC').fetchall(); c.close(); return templates.TemplateResponse(request=request,name='admin_promos.html',context=ctx(request,promos=promos))
 
 @app.post('/admin/promos', name='admin_promo_create')
 async def admin_promo_create(request:Request):
@@ -387,10 +387,10 @@ def admin_promo_toggle(promo_id:int):
 
 @app.get('/admin/analytics', response_class=HTMLResponse, name='admin_analytics')
 def admin_analytics(request:Request):
-    c=db(); month_rows=c.execute("SELECT substr(created_at,1,7) m,COUNT(*) n,COALESCE(SUM(CASE WHEN status!='Отменена' THEN total ELSE 0 END),0) revenue FROM bookings GROUP BY m ORDER BY m DESC LIMIT 6").fetchall(); car_rows=c.execute("SELECT car_name,COUNT(*) n,COALESCE(SUM(CASE WHEN status!='Отменена' THEN total ELSE 0 END),0) revenue FROM bookings GROUP BY car_name ORDER BY revenue DESC LIMIT 8").fetchall(); source_rows=c.execute("SELECT source,COUNT(*) n FROM bookings GROUP BY source ORDER BY n DESC").fetchall(); c.close(); return templates.TemplateResponse('admin_analytics.html',ctx(request,months=list(reversed(month_rows)),car_stats=car_rows,source_stats=source_rows))
+    c=db(); month_rows=c.execute("SELECT substr(created_at,1,7) m,COUNT(*) n,COALESCE(SUM(CASE WHEN status!='Отменена' THEN total ELSE 0 END),0) revenue FROM bookings GROUP BY m ORDER BY m DESC LIMIT 6").fetchall(); car_rows=c.execute("SELECT car_name,COUNT(*) n,COALESCE(SUM(CASE WHEN status!='Отменена' THEN total ELSE 0 END),0) revenue FROM bookings GROUP BY car_name ORDER BY revenue DESC LIMIT 8").fetchall(); source_rows=c.execute("SELECT source,COUNT(*) n FROM bookings GROUP BY source ORDER BY n DESC").fetchall(); c.close(); return templates.TemplateResponse(request=request,name='admin_analytics.html',context=ctx(request,months=list(reversed(month_rows)),car_stats=car_rows,source_stats=source_rows))
 
 @app.get('/admin/settings', response_class=HTMLResponse, name='admin_settings')
-def admin_settings(request:Request): return templates.TemplateResponse('admin_settings.html',ctx(request,current=settings_dict()))
+def admin_settings(request:Request): return templates.TemplateResponse(request=request,name='admin_settings.html',context=ctx(request,current=settings_dict()))
 
 @app.post('/admin/settings', name='admin_settings_save')
 async def admin_settings_save(request:Request):
@@ -401,11 +401,11 @@ async def admin_settings_save(request:Request):
 
 @app.get('/admin/notifications', response_class=HTMLResponse, name='admin_notifications')
 def admin_notifications(request:Request):
-    c=db(); notes=c.execute('SELECT * FROM notifications ORDER BY id DESC LIMIT 100').fetchall(); c.execute('UPDATE notifications SET is_read=1'); c.commit(); c.close(); return templates.TemplateResponse('admin_notifications.html',ctx(request,notes=notes))
+    c=db(); notes=c.execute('SELECT * FROM notifications ORDER BY id DESC LIMIT 100').fetchall(); c.execute('UPDATE notifications SET is_read=1'); c.commit(); c.close(); return templates.TemplateResponse(request=request,name='admin_notifications.html',context=ctx(request,notes=notes))
 
 @app.get('/admin/search', response_class=HTMLResponse, name='admin_search')
 def admin_search(request:Request,q:str=''):
-    c=db(); bookings=c.execute("SELECT * FROM bookings WHERE customer_name LIKE ? OR phone LIKE ? OR car_name LIKE ? OR CAST(id AS TEXT) LIKE ? ORDER BY id DESC LIMIT 20",[f'%{q}%']*4).fetchall() if q else []; clients=c.execute("SELECT * FROM users WHERE name LIKE ? OR phone LIKE ? OR email LIKE ? ORDER BY id DESC LIMIT 20",[f'%{q}%']*3).fetchall() if q else []; cars=c.execute("SELECT * FROM cars WHERE name LIKE ? OR city LIKE ? ORDER BY id DESC LIMIT 20",[f'%{q}%']*2).fetchall() if q else []; c.close(); return templates.TemplateResponse('admin_search.html',ctx(request,q=q,bookings=bookings,clients=clients,cars=cars))
+    c=db(); bookings=c.execute("SELECT * FROM bookings WHERE customer_name LIKE ? OR phone LIKE ? OR car_name LIKE ? OR CAST(id AS TEXT) LIKE ? ORDER BY id DESC LIMIT 20",[f'%{q}%']*4).fetchall() if q else []; clients=c.execute("SELECT * FROM users WHERE name LIKE ? OR phone LIKE ? OR email LIKE ? ORDER BY id DESC LIMIT 20",[f'%{q}%']*3).fetchall() if q else []; cars=c.execute("SELECT * FROM cars WHERE name LIKE ? OR city LIKE ? ORDER BY id DESC LIMIT 20",[f'%{q}%']*2).fetchall() if q else []; c.close(); return templates.TemplateResponse(request=request,name='admin_search.html',context=ctx(request,q=q,bookings=bookings,clients=clients,cars=cars))
 
 @app.get('/api/check-availability', name='check_availability')
 def check_availability(car_id:int,start:str,end:str):
@@ -418,11 +418,11 @@ def check_promo(code:str,amount:int=0):
     discount=(amount*p['discount']//100) if p['kind']=='percent' else min(amount,p['discount']); return JSONResponse({'valid':True,'discount':discount,'label':f"-{p['discount']}%" if p['kind']=='percent' else f"-{p['discount']} ₸"})
 
 @app.get('/about', response_class=HTMLResponse, name='about')
-def about(request:Request):return templates.TemplateResponse('simple.html',ctx(request,title='О сервисе',body='Drive.kz — современная платформа аренды автомобилей с прозрачными ценами, онлайн-бронированием и поддержкой 24/7.'))
+def about(request:Request):return templates.TemplateResponse(request=request,name='simple.html',context=ctx(request,title='О сервисе',body='Drive.kz — современная платформа аренды автомобилей с прозрачными ценами, онлайн-бронированием и поддержкой 24/7.'))
 @app.get('/terms', response_class=HTMLResponse, name='terms')
-def terms(request:Request):return templates.TemplateResponse('simple.html',ctx(request,title='Условия аренды',body='Минимальный возраст, стаж, залог, лимит пробега, правила возврата и страхования настраиваются владельцем автопроката в админ-панели.'))
+def terms(request:Request):return templates.TemplateResponse(request=request,name='simple.html',context=ctx(request,title='Условия аренды',body='Минимальный возраст, стаж, залог, лимит пробега, правила возврата и страхования настраиваются владельцем автопроката в админ-панели.'))
 @app.get('/faq', response_class=HTMLResponse, name='faq')
-def faq(request:Request):return templates.TemplateResponse('faq.html',ctx(request))
+def faq(request:Request):return templates.TemplateResponse(request=request,name='faq.html',context=ctx(request))
 
 if __name__=='__main__':
     import uvicorn; uvicorn.run(app,host='0.0.0.0',port=5000)
